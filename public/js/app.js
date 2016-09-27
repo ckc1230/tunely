@@ -31,28 +31,71 @@ sampleAlbums.push({
              name: 'Dark Night of the Soul',
              releaseDate: '2008, September 12',
              genres: [ 'piano' ]
+
            });
 /* end of hard-coded data */
 
-
+var allAlbums = [];
 
 
 $(document).ready(function() {
   console.log('app.js loaded!');
 
+  // renderAlbum();
+
+  $.ajax({
+    method: 'GET',
+    url: '/api/albums',
+    success: handleSuccess,
+    error: handleError
+  });
+
+  $('#albums').on('click', '.add-song', function(e) {
+      console.log('Song added');
+      var id = $(this).parents('.album').data('album-id'); // "5665ff1678209c64e51b4e7b"
+      console.log('id',id);
+      $('#songModal').data('album-id', id);
+      $('#songModal').modal();
+  });
+
+  $('.modal-content').on('click', '#saveSong', function handleNewSongSubmit(e) {
+
+  // var id = $(this).parents('.album').data('album-id');
+  // console.log(id);
+    var newSong = {
+      trackNumber: $('#songName').val(),
+      name: $('#trackNumber').val()
+    }
+    console.log(newSong);
+
+  // get data from modal fields
+  // POST to SERVER
+  // clear form
+  // close modal
+  // update the correct album to show the new song
+    
+  });
+
+
+
+// call this when the button on the modal is clicked
+
+
+
+
+
 });
-
-
-
 
 
 // this function takes a single album and renders it to the page
 function renderAlbum(album) {
   console.log('rendering album:', album);
 
+  sampleAlbums.forEach(function(album, i) {
+
   var albumHtml =
   "        <!-- one album -->" +
-  "        <div class='row album' data-album-id='" + "HARDCODED ALBUM ID" + "'>" +
+  "        <div class='row album' data-album-id='" + album._id + "'>" +
   "          <div class='col-md-10 col-md-offset-1'>" +
   "            <div class='panel panel-default'>" +
   "              <div class='panel-body'>" +
@@ -65,15 +108,19 @@ function renderAlbum(album) {
   "                    <ul class='list-group'>" +
   "                      <li class='list-group-item'>" +
   "                        <h4 class='inline-header'>Album Name:</h4>" +
-  "                        <span class='album-name'>" + "HARDCODED ALBUM NAME" + "</span>" +
+  "                        <span class='album-name'>" + album.name + "</span>" +
   "                      </li>" +
   "                      <li class='list-group-item'>" +
   "                        <h4 class='inline-header'>Artist Name:</h4>" +
-  "                        <span class='artist-name'>" +  "HARDCODED ARTIST NAME"+ "</span>" +
+  "                        <span class='artist-name'>" +  album.artistName+ "</span>" +
   "                      </li>" +
   "                      <li class='list-group-item'>" +
   "                        <h4 class='inline-header'>Released date:</h4>" +
-  "                        <span class='album-releaseDate'>" + "HARDCODED ALBUM RELEASE" + "</span>" +
+  "                        <span class='album-releaseDate'>" + album.releaseDate + "</span>" +
+  "                      </li>" +
+  "                      <li class='list-group-item'>" +
+  "                        <h4 class='inline-header'>Songs:</h4>" +
+  "                        <span class='album-songs'>" + buildSongsHtml(album.songs) + "</span>" +
   "                      </li>" +
   "                    </ul>" +
   "                  </div>" +
@@ -82,7 +129,12 @@ function renderAlbum(album) {
 
   "              </div>" + // end of panel-body
 
-  "              <div class='panel-footer'>" +
+  "              <div class='panel-footer'>" + 
+  "                 <div class='panel-footer'>" +
+  "                     <button class='btn btn-primary add-song'>Add Song</button>" +      
+  "                     <button class='btn btn-primary delete-song'>Delete Song</button>" +
+  "                 </div>" +
+
   "              </div>" +
 
   "            </div>" +
@@ -91,4 +143,57 @@ function renderAlbum(album) {
 
   // render to the page with jQuery
 
+  $('#albums').append(albumHtml);
+  })
 }
+
+function handleSuccess(json) {
+  sampleAlbums = json;
+  console.log('YAY');
+  renderAlbum();
+
+// Look back to understand this - 11:23AM
+
+  $('#album-form').on('submit', function(e) {
+  e.preventDefault();
+  var newAlbum = $(this).serialize();
+  $(this).trigger("reset");
+  console.log(newAlbum);
+  $.ajax({
+    method: 'POST',
+    url: '/api/albums',
+    data: newAlbum,
+    success: newAlbumSuccess,
+    error: newAlbumError
+    });
+  });
+
+}
+
+function handleError() {
+  console.log('Uh oh...');
+}
+
+
+function newAlbumSuccess(json) {
+  console.log("New album posted!");
+  sampleAlbums.push(json);
+  renderAlbum();
+}
+
+function newAlbumError() {
+  console.log("Uh oh. Didn't add.")
+}
+
+function buildSongsHtml(array) {
+  var songString = '';
+  array.forEach(function(song,index) {
+    songString += '&ndash; (' + song.trackNumber + ') '+ song.name + ' ';
+  })
+  return songString;
+}
+
+
+
+
+
